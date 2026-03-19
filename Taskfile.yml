@@ -19,20 +19,7 @@ tasks:
     vars:
       FMT: '{{default "yaml" .FORMAT}}'
     cmds:
-      - |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        shopt -s nullglob
-        files=({{.SOURCE_DIR}}/teams/*.yaml)
-        if [ ${#files[@]} -eq 0 ]; then
-          echo "No team configs found in {{.SOURCE_DIR}}/teams/"
-          exit 1
-        fi
-        for team_file in "${files[@]}"; do
-          team_name=$(basename "$team_file" .yaml)
-          echo ">>> Processing team: $team_name"
-          task generate:team TEAM="$team_name" FORMAT="{{.FMT}}"
-        done
+      - ./scripts/generate-all.sh "{{.SOURCE_DIR}}" "{{.FMT}}"
 
   generate:yaml:
     desc: "Generate YAML files for all teams"
@@ -57,42 +44,7 @@ tasks:
     requires:
       vars: [TEAM]
     cmds:
-      - |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        team_file="{{.SOURCE_DIR}}/teams/{{.TEAM}}.yaml"
-
-        if [ ! -f "$team_file" ]; then
-          echo "Error: Team configuration not found: $team_file"
-          exit 1
-        fi
-
-        # Export values from the team config as environment variables
-        # so envsubst can substitute them into the base templates.
-        export NAMESPACE=$(yq '.namespace' "$team_file")
-        export TEAM_NAME=$(yq '.name' "$team_file")
-        export ENVIRONMENT=$(yq '.environment' "$team_file")
-        export TEAM_GROUP=$(yq '.group' "$team_file")
-        export CPU_REQUEST=$(yq '.resources.cpu_request' "$team_file")
-        export CPU_LIMIT=$(yq '.resources.cpu_limit' "$team_file")
-        export MEMORY_REQUEST=$(yq '.resources.memory_request' "$team_file")
-        export MEMORY_LIMIT=$(yq '.resources.memory_limit' "$team_file")
-        export MAX_PODS=$(yq '.resources.pods' "$team_file")
-
-        output_dir="{{.DEPLOY_DIR}}/{{.FMT}}/{{.TEAM}}"
-        mkdir -p "$output_dir"
-
-        for template in {{.SOURCE_DIR}}/base/*.yaml; do
-          resource_name=$(basename "$template" .yaml)
-          if [ "{{.FMT}}" = "json" ]; then
-            envsubst < "$template" | yq -o json > "$output_dir/$resource_name.json"
-          else
-            envsubst < "$template" > "$output_dir/$resource_name.yaml"
-          fi
-          echo "  -> $output_dir/$resource_name.{{.FMT}}"
-        done
-
-        echo "Done: generated {{.FMT}} files for team '{{.TEAM}}'"
+      - ./scripts/generate-team.sh "{{.SOURCE_DIR}}" "{{.DEPLOY_DIR}}" "{{.TEAM}}" "{{.FMT}}"
 
   # ─── Team management helpers ──────────────────────────────────────────────
 
@@ -100,23 +52,7 @@ tasks:
     desc: "List all available team configurations"
     silent: true
     cmds:
-      - |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        shopt -s nullglob
-        files=({{.SOURCE_DIR}}/teams/*.yaml)
-        if [ ${#files[@]} -eq 0 ]; then
-          echo "No team configs found in {{.SOURCE_DIR}}/teams/"
-          exit 0
-        fi
-        printf "%-20s %-30s %-12s\n" "TEAM" "NAMESPACE" "ENVIRONMENT"
-        printf "%-20s %-30s %-12s\n" "----" "---------" "-----------"
-        for team_file in "${files[@]}"; do
-          team=$(basename "$team_file" .yaml)
-          ns=$(yq '.namespace' "$team_file")
-          env=$(yq '.environment' "$team_file")
-          printf "%-20s %-30s %-12s\n" "$team" "$ns" "$env"
-        done
+      - ./scripts/list-teams.sh "{{.SOURCE_DIR}}"
 
   new-team:
     desc: "Scaffold a new team config. Required: TEAM=<name>  Optional: NAMESPACE=<ns> ENVIRONMENT=<env>"
@@ -126,29 +62,7 @@ tasks:
     requires:
       vars: [TEAM]
     cmds:
-      - |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        output_file="{{.SOURCE_DIR}}/teams/{{.TEAM}}.yaml"
-        if [ -f "$output_file" ]; then
-          echo "Error: Team configuration already exists: $output_file"
-          exit 1
-        fi
-        {
-          echo "name: {{.TEAM}}"
-          echo "namespace: {{.NS}}"
-          echo "environment: {{.ENV}}"
-          echo "group: {{.TEAM}}-admins"
-          echo "resources:"
-          echo "  cpu_request: \"500m\""
-          echo "  cpu_limit: \"2\""
-          echo "  memory_request: \"512Mi\""
-          echo "  memory_limit: \"2Gi\""
-          echo "  pods: \"20\""
-        } > "$output_file"
-        echo "Created: $output_file"
-        echo "Edit the file to adjust resource limits, then run:"
-        echo "  task generate:team TEAM={{.TEAM}}"
+      - ./scripts/new-team.sh "{{.SOURCE_DIR}}" "{{.TEAM}}" "{{.NS}}" "{{.ENV}}"
 
   # ─── Cleanup ──────────────────────────────────────────────────────────────
 
