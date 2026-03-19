@@ -1,0 +1,10 @@
+name: team-technology
+namespace: team-technology
+environment: production
+group: team-technology-admins
+resources:
+  cpu_request: "500m"
+  cpu_limit: "4"
+  memory_request: "512Mi"
+  memory_limit: "4Gi"
+  pods: "30"

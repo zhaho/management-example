@@ -1,0 +1,12 @@
+{
+  "apiVersion": "v1",
+  "kind": "Namespace",
+  "metadata": {
+    "name": "team-technology",
+    "labels": {
+      "team": "team-technology",
+      "environment": "production",
+      "managed-by": "taskfile"
+    }
+  }
+}

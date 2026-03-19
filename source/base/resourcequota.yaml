@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ${TEAM_NAME}-quota
+  namespace: ${NAMESPACE}
+  labels:
+    team: ${TEAM_NAME}
+    environment: ${ENVIRONMENT}
+spec:
+  hard:
+    requests.cpu: ${CPU_REQUEST}
+    limits.cpu: ${CPU_LIMIT}
+    requests.memory: ${MEMORY_REQUEST}
+    limits.memory: ${MEMORY_LIMIT}
+    pods: "${MAX_PODS}"

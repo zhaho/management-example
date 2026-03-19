@@ -1,0 +1,27 @@
+{
+  "apiVersion": "v1",
+  "kind": "LimitRange",
+  "metadata": {
+    "name": "team-finance-limits",
+    "namespace": "team-finance",
+    "labels": {
+      "team": "team-finance",
+      "environment": "staging"
+    }
+  },
+  "spec": {
+    "limits": [
+      {
+        "type": "Container",
+        "default": {
+          "cpu": 2,
+          "memory": "2Gi"
+        },
+        "defaultRequest": {
+          "cpu": "250m",
+          "memory": "256Mi"
+        }
+      }
+    ]
+  }
+}

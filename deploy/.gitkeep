@@ -1,0 +1,3 @@
+# Generated files land here.
+# This directory is managed by the Taskfile — do not edit files manually.
+# Run: task generate:yaml  or  task generate:json

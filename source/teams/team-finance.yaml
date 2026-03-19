@@ -1,0 +1,10 @@
+name: team-finance
+namespace: team-finance
+environment: staging
+group: team-finance-admins
+resources:
+  cpu_request: "250m"
+  cpu_limit: "2"
+  memory_request: "256Mi"
+  memory_limit: "2Gi"
+  pods: "20"
